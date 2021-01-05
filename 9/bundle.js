@@ -480,9 +480,9 @@ __webpack_require__.r(__webpack_exports__);
 
 
 class Movie {
-  constructor(container, generateComment, changeData) {
+  constructor(container, changeData) {
     this._container = container;
-    this._generateComment = generateComment;
+
     this._changeData = changeData;
 
     this._movieCardView = null;
@@ -494,15 +494,15 @@ class Movie {
     this._handleFavoriteClick = this._handleFavoriteClick.bind(this);
   }
 
-  init(movie, comments) {
+  init(movie) {
     this._movie = movie;
-    this._commentsList = comments;
-
+    this._commentsList = movie.comments;
     const prevMovieView = this._movieCardView;
     const prevPopupView = this._newPopupView;
+    this._commentsComponent = [];
 
     this._movieCardView = new _view_movie_card_js__WEBPACK_IMPORTED_MODULE_1__["default"](movie);
-    this._newPopupView = new _view_popup_js__WEBPACK_IMPORTED_MODULE_2__["default"](movie);
+    this._newPopupView = new _view_popup_js__WEBPACK_IMPORTED_MODULE_2__["default"](movie, this._commentsComponent);
 
     this._movieCardView.setFilmCardClickHandler(this._filmCardClickHandler);
 
@@ -556,18 +556,13 @@ class Movie {
   // показ попапа
   _showPopup() {
     document.body.classList.add(`hide-overflow`);
-
     document.body.appendChild(this._newPopupView.getElement());
-    const commentsListContainer = this._newPopupView.getElement().querySelector(`.film-details__comments-list`);
-
-    this._commentsList.forEach((comment) => {
-      Object(_utils_render_js__WEBPACK_IMPORTED_MODULE_0__["render"])(commentsListContainer, comment, _utils_render_js__WEBPACK_IMPORTED_MODULE_0__["RenderPosition"].BEFORE_END);
-    });
   }
 
   // скрытие попапа
   _closePopup() {
     document.body.classList.remove(`hide-overflow`);
+    this._newPopupView.reset(this._movie);
     this._newPopupView.getElement().remove();
   }
 
@@ -614,9 +609,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _view_films_wrapper_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../view/films-wrapper.js */ "./src/view/films-wrapper.js");
 /* harmony import */ var _movie_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./movie.js */ "./src/presenter/movie.js");
 /* harmony import */ var _view_sort_menu_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../view/sort-menu.js */ "./src/view/sort-menu.js");
-/* harmony import */ var _view_comments_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../view/comments.js */ "./src/view/comments.js");
-/* harmony import */ var _mock_comment_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../mock/comment.js */ "./src/mock/comment.js");
-
+/* harmony import */ var _mock_comment_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../mock/comment.js */ "./src/mock/comment.js");
 
 
 
@@ -663,7 +656,7 @@ class MoviesList {
     this._filmsWrapperComponent = new _view_films_wrapper_js__WEBPACK_IMPORTED_MODULE_6__["default"]();
     this._showMoreButtonComponent = new _view_show_more_js__WEBPACK_IMPORTED_MODULE_4__["default"]();
     this._sortMenuComponent = new _view_sort_menu_js__WEBPACK_IMPORTED_MODULE_8__["default"]();
-    this._generateComment = _mock_comment_js__WEBPACK_IMPORTED_MODULE_10__["generateComment"];
+    this._generateComment = _mock_comment_js__WEBPACK_IMPORTED_MODULE_9__["generateComment"];
     this._renderedFilmsCount = _utils_const_js__WEBPACK_IMPORTED_MODULE_2__["MoviesListData"].CARDS_MAIN_QUANTITY;
     this._currentSortButton = _utils_const_js__WEBPACK_IMPORTED_MODULE_2__["SortType"].DEFAULT;
     this._commentsCount = COMMENTS_QUANTITY;
@@ -702,12 +695,13 @@ class MoviesList {
 
   // рендер карточки фильма
   _renderMovieCard(container, film) {
+    const comments = [];
     for (let j = 0; j < this._commentsCount; j++) {
-      this._comments.push(new _view_comments_js__WEBPACK_IMPORTED_MODULE_9__["default"](this._generateComment()));
+      comments.push(this._generateComment());
     }
-    const moviePresenter = new _movie_js__WEBPACK_IMPORTED_MODULE_7__["default"](container, _mock_comment_js__WEBPACK_IMPORTED_MODULE_10__["generateComment"], this._handleMovieChange);
-    moviePresenter.init(film, this._comments);
-    this._comments = [];
+    film.comments = comments;
+    const moviePresenter = new _movie_js__WEBPACK_IMPORTED_MODULE_7__["default"](container, this._handleMovieChange);
+    moviePresenter.init(film);
     this._moviePresenter[film.id] = moviePresenter;
   }
 
@@ -1164,55 +1158,6 @@ class Abstract {
 
 /***/ }),
 
-/***/ "./src/view/comments.js":
-/*!******************************!*\
-  !*** ./src/view/comments.js ***!
-  \******************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Comment; });
-/* harmony import */ var _utils_date_time_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils/date-time.js */ "./src/utils/date-time.js");
-/* harmony import */ var _abstract_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./abstract.js */ "./src/view/abstract.js");
-
-
-
-const createCommentTemplate = (comment) => {
-  const {emoji, text, author, date} = comment;
-
-  return (
-    `<li class="film-details__comment">
-      <span class="film-details__comment-emoji">
-        <img src="${emoji}" width="55" height="55" alt="emoji-smile">
-      </span>
-      <div>
-        <p class="film-details__comment-text">${text}</p>
-        <p class="film-details__comment-info">
-          <span class="film-details__comment-author">${author}</span>
-          <span class="film-details__comment-day">${Object(_utils_date_time_js__WEBPACK_IMPORTED_MODULE_0__["getYMDHMDate"])(date)}</span>
-          <button class="film-details__comment-delete">Delete</button>
-        </p>
-      </div>
-    </li>`
-  );
-};
-
-class Comment extends _abstract_js__WEBPACK_IMPORTED_MODULE_1__["default"] {
-  constructor(comment) {
-    super();
-    this._comment = comment;
-  }
-
-  getTemplate() {
-    return createCommentTemplate(this._comment);
-  }
-}
-
-
-/***/ }),
-
 /***/ "./src/view/films-list.js":
 /*!********************************!*\
   !*** ./src/view/films-list.js ***!
@@ -1547,10 +1492,57 @@ const createFilmDetailItemTemplate = (detail, detailName) => {
     </tr>`);
 };
 
+// создание элемента эмоджи
+const createEmojiItem = (emoji) => {
+  return (`<input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-${emoji}" value="${emoji}">
+           <label class="film-details__emoji-label" for="emoji-${emoji}">
+            <img src="./images/emoji/${emoji}.png" width="30" height="30" alt="emoji">
+           </label>`);
+};
+
+// создание списка эмоджи
+const createEmojiSection = (emojiList) => {
+  let emojiSection = ``;
+  for (let i = 0; i < emojiList.length; i++) {
+    emojiSection += createEmojiItem(emojiList[i]);
+  }
+  return (emojiSection);
+};
+
+// создание комментария
+const createCommentItem = (comment) => {
+  const {emoji, text, author, date} = comment;
+
+  return (
+    `<li class="film-details__comment">
+      <span class="film-details__comment-emoji">
+        <img src="${emoji}" width="55" height="55" alt="emoji-smile">
+      </span>
+      <div>
+        <p class="film-details__comment-text">${text}</p>
+        <p class="film-details__comment-info">
+          <span class="film-details__comment-author">${author}</span>
+          <span class="film-details__comment-day">${Object(_utils_date_time_js__WEBPACK_IMPORTED_MODULE_0__["getYMDHMDate"])(date)}</span>
+          <button class="film-details__comment-delete">Delete</button>
+        </p>
+      </div>
+    </li>`
+  );
+};
+
+// создание списка комментариев
+const createCommentsSection = (comments) => {
+  let commentsSection = ``;
+  for (let i = 0; i < comments.length; i++) {
+    commentsSection += createCommentItem(comments[i]);
+  }
+  return (commentsSection);
+};
+
 // создание шаблона информации о фильме
 const createPopUpTemplate = (data) => {
 
-  const {cover, title, rate, description, originalTitle, ageRestriction, releaseDate, duration, genres, director, screenwriters, cast, country, isToWatch, isAlreadyWatched, isInFavorites, commentEmojiSrc, commentEmojiAltText, comment} = data;
+  const {cover, title, rate, description, originalTitle, ageRestriction, releaseDate, duration, genres, director, screenwriters, cast, country, isToWatch, isAlreadyWatched, isInFavorites, commentEmoji, newComment, comments} = data;
 
   const controls = [
     {
@@ -1568,6 +1560,13 @@ const createPopUpTemplate = (data) => {
       modifier: `favorite`,
       isActive: isInFavorites
     }
+  ];
+
+  const emojis = [
+    `smile`,
+    `sleeping`,
+    `puke`,
+    `angry`
   ];
 
   const genresTemplate = genres.map((item) => `<span class="film-details__genre">${item}</span>`).join(``);
@@ -1632,46 +1631,28 @@ const createPopUpTemplate = (data) => {
 
         <div class="film-details__bottom-container">
           <section class="film-details__comments-wrap">
-            <h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">4</span></h3>
+            <h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">${comments.length}</span></h3>
 
             <ul class="film-details__comments-list">
-
+              ${createCommentsSection(comments)}
             </ul>
 
             <div class="film-details__new-comment">
               <div class="film-details__add-emoji-label">
-              ${commentEmojiSrc
-      ? `<img src="${commentEmojiSrc}" width="55" height="55" alt="${commentEmojiAltText}">`
+              ${commentEmoji
+      ? `<img src="./images/emoji/${commentEmoji}.png" width="55" height="55" alt="emoji-${commentEmoji}">`
       : ``}
               </div>
 
               <label class="film-details__comment-label">
-                <textarea class="film-details__comment-input" placeholder="Select reaction below and write comment here" name="comment">${comment
-      ? `${comment}</textarea>`
+                <textarea class="film-details__comment-input" placeholder="Select reaction below and write comment here" name="comment">${newComment
+      ? `${newComment}</textarea>`
       : `</textarea>`}
 
               </label>
 
               <div class="film-details__emoji-list">
-                <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-smile" value="smile">
-                <label class="film-details__emoji-label" for="emoji-smile">
-                  <img src="./images/emoji/smile.png" width="30" height="30" alt="emoji">
-                </label>
-
-                <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-sleeping" value="sleeping">
-                <label class="film-details__emoji-label" for="emoji-sleeping">
-                  <img src="./images/emoji/sleeping.png" width="30" height="30" alt="emoji">
-                </label>
-
-                <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-puke" value="puke">
-                <label class="film-details__emoji-label" for="emoji-puke">
-                  <img src="./images/emoji/puke.png" width="30" height="30" alt="emoji">
-                </label>
-
-                <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-angry" value="angry">
-                <label class="film-details__emoji-label" for="emoji-angry">
-                  <img src="./images/emoji/angry.png" width="30" height="30" alt="emoji">
-                </label>
+                  ${createEmojiSection(emojis)}
               </div>
             </div>
           </section>
@@ -1693,18 +1674,14 @@ class Popup extends _smart_js__WEBPACK_IMPORTED_MODULE_3__["default"] {
     this._historyClickHandler = this._historyClickHandler.bind(this);
     this._favoriteClickHandler = this._favoriteClickHandler.bind(this);
     this._formSubmitHandler = this._formSubmitHandler.bind(this);
-    this._addSmileEmojiHandler = this._addSmileEmojiHandler.bind(this);
-    this._addSleepingEmojiHandler = this._addSleepingEmojiHandler.bind(this);
-    this._addPukeEmojiHandler = this._addPukeEmojiHandler.bind(this);
-    this._addAngryEmojiHandler = this._addAngryEmojiHandler.bind(this);
+    this._emojiChangeHandler = this._emojiChangeHandler.bind(this);
     this._commentInputHandler = this._commentInputHandler.bind(this);
-    this._scrollHandler = this._scrollHandler.bind(this);
 
     this._setInnerHandlers();
   }
 
   getTemplate() {
-    return createPopUpTemplate(this._data);
+    return createPopUpTemplate(this._data, this._commentsComponent);
   }
 
   _clickClosePopupHandler(evt) {
@@ -1713,9 +1690,9 @@ class Popup extends _smart_js__WEBPACK_IMPORTED_MODULE_3__["default"] {
   }
 
   _escPressClosePopupHandler(evt) {
-    if (evt.key === _utils_render_js__WEBPACK_IMPORTED_MODULE_1__["KeyBindings"].ESCAPE) {
+    if (evt.key === _utils_render_js__WEBPACK_IMPORTED_MODULE_1__["KeyBindings"].ESCAPE && document.body.contains(this.getElement())) {
       evt.preventDefault();
-      this._callback.keydown();
+      this._callback.escKeydown();
     }
   }
 
@@ -1745,7 +1722,7 @@ class Popup extends _smart_js__WEBPACK_IMPORTED_MODULE_3__["default"] {
   }
 
   setEscPressClosePopupHandler(callback) {
-    this._callback.keydown = callback;
+    this._callback.escKeydown = callback;
     document.addEventListener(`keydown`, this._escPressClosePopupHandler);
   }
 
@@ -1774,8 +1751,8 @@ class Popup extends _smart_js__WEBPACK_IMPORTED_MODULE_3__["default"] {
         {},
         film,
         {
-          commentEmojiSrc: null,
-          commentEmojiAltText: null
+          commentEmoji: null,
+          newComment: null
         }
     );
   }
@@ -1783,86 +1760,62 @@ class Popup extends _smart_js__WEBPACK_IMPORTED_MODULE_3__["default"] {
   static parseDataToFilm(data) {
     data = Object.assign({}, data);
 
-    if (!data.commentEmojiSrc) {
-      data.commentEmojiSrc = null;
+    if (!data.commentEmoji) {
+      data.commentEmoji = null;
     }
 
-    if (!data.commentEmojiAltText) {
-      data.commentEmojiAltText = null;
+    if (!data.newComment) {
+      data.newComment = null;
     }
 
-    delete data.commentEmojiSrc;
-    delete data.commentEmojiAltText;
+    delete data.commentEmoji;
+    delete data.newComment;
 
     return data;
   }
 
-  _addSmileEmojiHandler(evt) {
+  _emojiChangeHandler(evt) {
     evt.preventDefault();
+    this._scrollPosition = this.getElement().scrollTop;
 
     this.updateData({
-      commentEmojiSrc: `./images/emoji/smile.png`,
-      commentEmojiAltText: `emoji-smile`
-    });
-  }
-
-  _addSleepingEmojiHandler(evt) {
-    evt.preventDefault();
-
-    this.updateData({
-      commentEmojiSrc: `./images/emoji/sleeping.png`,
-      commentEmojiAltText: `emoji-sleeping`
-    });
-  }
-
-  _addPukeEmojiHandler(evt) {
-    evt.preventDefault();
-
-    this.updateData({
-      commentEmojiSrc: `./images/emoji/puke.png`,
-      commentEmojiAltText: `emoji-puke`
-    });
-  }
-
-  _addAngryEmojiHandler(evt) {
-    evt.preventDefault();
-
-    this.updateData({
-      commentEmojiSrc: `./images/emoji/angry.png`,
-      commentEmojiAltText: `emoji-angry`
+      commentEmoji: evt.target.value,
     });
   }
 
   _commentInputHandler(evt) {
     evt.preventDefault();
-    this.updateData({comment: evt.target.value}, true);
-  }
 
-  _scrollHandler(evt) {
-    evt.preventDefault();
     this._scrollPosition = this.getElement().scrollTop;
+    this.updateData({
+      newComment: evt.target.value,
+    }, true);
   }
 
   _setInnerHandlers() {
     this.getElement().querySelector(`.film-details__close-btn`).addEventListener(`click`, this._clickClosePopupHandler);
     document.addEventListener(`keydown`, this._escPressClosePopupHandler);
+
     this.getElement().querySelector(`.film-details__control-label--watchlist`).addEventListener(`click`, this._watchlistClickHandler);
     this.getElement().querySelector(`.film-details__control-label--watched`).addEventListener(`click`, this._historyClickHandler);
     this.getElement().querySelector(`.film-details__control-label--favorite`).addEventListener(`click`, this._favoriteClickHandler);
     this.getElement().querySelector(`form`).addEventListener(`submit`, this._formSubmitHandler);
 
-    this.getElement().querySelector(`label[for="emoji-smile"]`).addEventListener(`click`, this._addSmileEmojiHandler);
-    this.getElement().querySelector(`label[for="emoji-sleeping"]`).addEventListener(`click`, this._addSleepingEmojiHandler);
-    this.getElement().querySelector(`label[for="emoji-puke"]`).addEventListener(`click`, this._addPukeEmojiHandler);
-    this.getElement().querySelector(`label[for="emoji-angry"]`).addEventListener(`click`, this._addAngryEmojiHandler);
+    this.getElement().querySelector(`.film-details__emoji-list`).addEventListener(`change`, this._emojiChangeHandler);
     this.getElement().querySelector(`.film-details__comment-input`).addEventListener(`input`, this._commentInputHandler);
 
-    this.getElement().addEventListener(`scroll`, this._scrollHandler);
   }
 
   restoreHandlers() {
+    document.removeEventListener(`keydown`, this._escPressClosePopupHandler);
     this._setInnerHandlers();
     this.getElement().scrollTop = this._scrollPosition;
+  }
+
+  reset(film) {
+    this.updateData(
+        Popup.parseFilmToData(film)
+    );
   }
 
 }
